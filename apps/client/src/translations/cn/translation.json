@@ -4208,5 +4208,32 @@
   "attribute_menu": {
     "attributes": "属性",
     "not-set": "未设置"
+  },
+  "content_relocation": {
+    "title": "内容迁移",
+    "location": "内容在哪里",
+    "location_local": "本数据库",
+    "external_storage": "外部存储",
+    "move_out": "移到{{storage}}",
+    "move_back": "移回本数据库",
+    "moving": "正在移动…",
+    "moved": "内容已移动。",
+    "settings_description": "把笔记的内容交给外部服务保管：内容存在本数据库之外，需要时再取回。哪些笔记交出去，由你逐篇决定。",
+    "settings_enabled": "启用内容迁移",
+    "settings_url": "服务地址",
+    "settings_url_description": "实现迁移协议的那个服务的地址，例如 http://127.0.0.1:37862/",
+    "settings_token_description": "以 Bearer 令牌的形式发送。只写不读：保存之后不会再显示出来。",
+    "settings_token": "令牌",
+    "size": "大小",
+    "add_service": "添加服务",
+    "service_name": "名称",
+    "service_name_description": "显示在列表里，随时可以改。",
+    "default_badge": "默认",
+    "set_default": "设为默认",
+    "delete_service": "删除服务",
+    "delete_confirmation": "删除“{{name}}”？内容仍留在那个服务上，只是 Trilium 再也找不到它。",
+    "no_services": "还没有配置任何服务。",
+    "settings_location_label": "位置标签",
+    "settings_location_label_description": "一个标签名，用来跟着记录笔记的内容在哪一侧：内容移出去时写“false”，移回来时写“true”。默认是“IsLocal”；留空则不写任何标签。"
   }
 }
