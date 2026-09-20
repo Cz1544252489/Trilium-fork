@@ -76,6 +76,11 @@ const server = vi.hoisted(() => ({
                 return { results: [{ integrity_check: "ok" }] };
             case "database/anonymized-databases":
                 return { databases: ANONYMIZED, anonymizedFolderPath: "/data/anonymized" };
+            // `ContentRelocationOptions` reads these through the real `options` service (its own
+            // spec, `database.content_relocation.spec.tsx`, mocks the hooks instead); the JSON one
+            // must parse, so it cannot be left out the way an unused string option can.
+            case "options":
+                return { contentRelocationServices: "[]", contentRelocationUrl: "", contentRelocationToken: "" };
             // Whatever the page's own imports ask for while they load, e.g. keyboard actions.
             default:
                 return [];

@@ -207,6 +207,17 @@ const BUILTIN_ATTRIBUTES = [
     { type: "label", name: "mediaNotesPlayMode", valueType: "select", selectOptions: [ "loop", "next" ] },
     { type: "label", name: "collection", valueType: "boolean" },
     { type: "label", name: "webViewSrc", valueType: "url", isDangerous: true },
+    // Written by content relocation: relocationHash is what the way back compares against,
+    // relocationTarget names the service holding the content, and relocationSize is shown to the
+    // reader, with nothing depending on it. The names below them are what earlier versions wrote,
+    // and are still read when a note carries them.
+    { type: "label", name: "relocationHash", valueType: "text" },
+    { type: "label", name: "relocationTarget", valueType: "text" },
+    { type: "label", name: "relocationSize", valueType: "text" },
+    { type: "label", name: "relocationInfo", valueType: "text" },
+    { type: "label", name: "relocationId", valueType: "text" },
+    { type: "label", name: "relocationMime", valueType: "text" },
+    { type: "label", name: "relocationSha256", valueType: "text" },
     { type: "label", name: "hideHighlightWidget", valueType: "boolean" },
     { type: "label", name: "iconPack", valueType: "text", isDangerous: true },
     { type: "label", name: "docName", valueType: "text", isDangerous: true },

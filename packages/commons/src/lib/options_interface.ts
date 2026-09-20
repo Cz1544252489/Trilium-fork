@@ -332,6 +332,20 @@ export interface OptionDefinitions extends KeyboardShortcutsOptions<KeyboardActi
     ocrLanguage: string;
     ocrAutoProcessImages: boolean;
     ocrMinConfidence: string;
+
+    // Content relocation: an external service moves a note's content out of the database and back.
+    /** Whether the relocation buttons are offered at all. */
+    contentRelocationEnabled: boolean;
+    /** JSON array of the configured services, each `{ id, name, url, token }`. */
+    contentRelocationServices: string;
+    /** Id of the service a note's content is sent to. */
+    contentRelocationDefault: string;
+    /** Base URL of the one service earlier versions could configure; read only to carry it over. */
+    contentRelocationUrl: string;
+    /** Bearer token that went with it. */
+    contentRelocationToken: string;
+    /** Label name written `false` when content moves out and `true` when it moves back; empty to write none. */
+    contentRelocationLocationLabel: string;
 }
 
 export type OptionNames = keyof OptionDefinitions;

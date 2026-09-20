@@ -11,6 +11,7 @@ import NoteMapTab from "./NoteMapTab";
 import NotePathsTab from "./NotePathsTab";
 import NotePropertiesTab from "./NotePropertiesTab";
 import OwnedAttributesTab from "./OwnedAttributesTab";
+import ContentRelocationTab from "./ContentRelocationTab";
 import { TabConfiguration } from "./ribbon-interface";
 import ScriptTab from "./ScriptTab";
 import SearchDefinitionTab from "./SearchDefinitionTab";
@@ -71,6 +72,15 @@ export const RIBBON_TAB_DEFINITIONS: TabConfiguration[] = [
         show: ({ note }) => note?.type === "image",
         toggleCommand: "toggleRibbonTabImageProperties",
         activate: true,
+    },
+    {
+        title: t("content_relocation.title"),
+        icon: "bx bx-transfer",
+        content: ContentRelocationTab,
+        // Mirrors what the button offers: a file note can send its content away, and a web view can
+        // take back content relocation put outside. One relocation never touched has nothing here.
+        show: ({ note }) => options.is("contentRelocationEnabled")
+            && (note?.type === "file" || (note?.type === "webView" && !!note?.getLabelValue("relocationId")))
     },
     {
         title: t("basic_properties.basic_properties"),

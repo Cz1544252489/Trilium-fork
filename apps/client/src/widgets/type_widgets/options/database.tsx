@@ -25,13 +25,19 @@ import {
     startOver
 } from "../../../services/setup_mode";
 import toast from "../../../services/toast";
-import { formatSize, isStandalone } from "../../../services/utils";
+import { formatSize, isStandalone, randomString } from "../../../services/utils";
 import { formatDateTime } from "../../../utils/formatters";
+import ActionButton from "../../react/ActionButton";
 import Admonition from "../../react/Admonition";
+import { Badge } from "../../react/Badge";
 import Button from "../../react/Button";
-import { Card, OptionCardSection } from "../../react/Card";
+import { Card, CardSection, OptionCardSection } from "../../react/Card";
 import DirectoryLink, { FileLink } from "../../react/DirectoryLink";
+import FormTextBox from "../../react/FormTextBox";
+import FormToggle from "../../react/FormToggle";
 import { PageLink } from "../../react/LinkButton";
+import NoItems from "../../react/NoItems";
+import { useTriliumOption, useTriliumOptionBool, useTriliumOptionJson } from "../../react/hooks";
 import { useFetch } from "../../react/use_fetch";
 import { showCleanupDialog } from "../space_usage/cleanup_dialog";
 import DatabaseFileList from "./components/DatabaseFileList";
@@ -78,6 +84,7 @@ export default function DatabaseSettings() {
             <DatabaseInfo refreshToken={infoToken} />
             <SpaceOptions onDatabaseChanged={refreshInfo} />
             <MaintenanceOptions onDatabaseChanged={refreshInfo} />
+            <ContentRelocationOptions />
             <StartOverOption state={startOverState} />
             {/* An anonymized copy is a file written beside the database and handed to someone else.
                 The browser build has nowhere to write one and no database file to copy. */}
@@ -90,6 +97,239 @@ export default function DatabaseSettings() {
                     targetPage: "_optionsBackup"
                 }
             ]} />
+        </>
+    );
+}
+
+/** One entry of `contentRelocationServices`, kept in sync with the server's `StoredService`. */
+interface ContentRelocationServiceConfig {
+    id: string;
+    name: string;
+    url: string;
+    token: string;
+}
+
+/**
+ * The id (and shown name) the server carries the single pre-multi-service address forward under,
+ * once there is a list for it to join. Must stay exactly "default" — content already moved out under
+ * it recorded that id on its note, and a different one here would orphan it.
+ */
+const LEGACY_SERVICE_ID = "default";
+
+/**
+ * Relocation hands a note's content to an external service, which keeps it outside this database and
+ * gives it back on request. Several services can be configured — a home machine, one on the local
+ * network, one reachable from outside it — and one of them is sent to when no note says otherwise.
+ *
+ * `contentRelocationUrl` / `contentRelocationToken` are the single address earlier versions could
+ * configure. They are left untouched here and, while `contentRelocationServices` is still empty,
+ * shown as one more service named `LEGACY_SERVICE_ID` — the same id the server falls back to, so
+ * content already moved out under it keeps finding its way back. Adding or removing a service carries
+ * that entry into `contentRelocationServices` for good, the same as any other change to the list.
+ *
+ * Exported so its own spec can mount it without the rest of the page's cards.
+ */
+export function ContentRelocationOptions() {
+    const [ enabled, setEnabled ] = useTriliumOptionBool("contentRelocationEnabled");
+    const [ storedServices, setStoredServices ] = useTriliumOptionJson<ContentRelocationServiceConfig[]>("contentRelocationServices");
+    const [ defaultId, setDefaultId ] = useTriliumOption("contentRelocationDefault");
+    const [ legacyUrl ] = useTriliumOption("contentRelocationUrl");
+    const [ legacyToken ] = useTriliumOption("contentRelocationToken");
+    const [ locationLabel, setLocationLabel ] = useTriliumOption("contentRelocationLocationLabel");
+    const [ adding, setAdding ] = useState(false);
+
+    const services = storedServices.length > 0
+        ? storedServices
+        // `useTriliumOption` can still answer "" (or, on the very first render, `undefined`) while
+        // the option cache is loading, before the legacy address is known one way or the other.
+        : ((legacyUrl ?? "").trim()
+            ? [ { id: LEGACY_SERVICE_ID, name: LEGACY_SERVICE_ID, url: legacyUrl, token: legacyToken ?? "" } ]
+            : []);
+
+    // `contentRelocationDefault` can name nothing (never set) or a service that was since removed;
+    // the server then falls back to the first configured one (see `defaultService` in
+    // `content_relocation.ts`), so the page reads the same way rather than showing no default where
+    // one is already in effect.
+    const effectiveDefaultId = services.some((service) => service.id === defaultId)
+        ? defaultId
+        : (services[0]?.id ?? "");
+
+    function addService(name: string, url: string, token: string) {
+        setStoredServices([ ...services, { id: randomString(), name, url, token } ]);
+        setAdding(false);
+    }
+
+    async function removeService(service: ContentRelocationServiceConfig) {
+        if (!await dialogService.confirm(t("content_relocation.delete_confirmation", { name: service.name }))) {
+            return;
+        }
+
+        const remaining = services.filter((candidate) => candidate.id !== service.id);
+        setStoredServices(remaining);
+        if (effectiveDefaultId === service.id) {
+            setDefaultId(remaining[0]?.id ?? "");
+        }
+    }
+
+    return (
+        <Card className="content-relocation" heading={t("content_relocation.title")}>
+            <OptionCardSection
+                label={t("content_relocation.settings_enabled")}
+                description={t("content_relocation.settings_description")}
+            >
+                <FormToggle
+                    switchOnName={t("content_relocation.settings_enabled")}
+                    switchOffName={t("content_relocation.settings_enabled")}
+                    currentValue={enabled}
+                    onChange={setEnabled}
+                />
+            </OptionCardSection>
+
+            {enabled && (
+                <>
+                    {services.length > 0 ? (
+                        services.map((service) => (
+                            <OptionCardSection
+                                key={service.id}
+                                label={
+                                    <span className="content-relocation-service-name">
+                                        {service.name}
+                                        {service.id === effectiveDefaultId && (
+                                            <Badge text={t("content_relocation.default_badge")} />
+                                        )}
+                                    </span>
+                                }
+                                description={
+                                    <span className="content-relocation-service-url">{service.url}</span>
+                                }
+                            >
+                                <span className="tn-card-option-actions">
+                                    {/* Only reachable once a second service exists: while the list
+                                        holds just the address carried over from before, that one
+                                        entry already reads as the default and needs no button of its
+                                        own to become it. */}
+                                    {service.id !== effectiveDefaultId && (
+                                        <ActionButton
+                                            icon="bx bx-star"
+                                            text={t("content_relocation.set_default")}
+                                            onClick={() => setDefaultId(service.id)}
+                                        />
+                                    )}
+                                    <ActionButton
+                                        className="destructive-action-icon"
+                                        icon="bx bx-trash"
+                                        text={t("content_relocation.delete_service")}
+                                        onClick={() => void removeService(service)}
+                                    />
+                                </span>
+                            </OptionCardSection>
+                        ))
+                    ) : (
+                        <CardSection>
+                            <NoItems icon="bx bx-server" text={t("content_relocation.no_services")} size="small" />
+                        </CardSection>
+                    )}
+
+                    {adding ? (
+                        <AddContentRelocationServiceForm
+                            onAdd={addService}
+                            onCancel={() => setAdding(false)}
+                        />
+                    ) : (
+                        <CardSection>
+                            <Button
+                                name="add-content-relocation-service-button"
+                                text={t("content_relocation.add_service")}
+                                icon="bx-plus"
+                                size="micro"
+                                onClick={() => setAdding(true)}
+                            />
+                        </CardSection>
+                    )}
+
+                    {/* A knowledge base's own convention for "where is this note's content", kept
+                        outside the relocation protocol itself: the name is this database's to pick,
+                        so it is a label the server writes rather than one it assumes. */}
+                    <OptionCardSection
+                        name="content-relocation-location-label"
+                        label={t("content_relocation.settings_location_label")}
+                        description={t("content_relocation.settings_location_label_description")}
+                        stacked
+                    >
+                        <FormTextBox
+                            placeholder="IsLocal"
+                            currentValue={locationLabel}
+                            onBlur={setLocationLabel}
+                        />
+                    </OptionCardSection>
+                </>
+            )}
+        </Card>
+    );
+}
+
+/**
+ * The fields for a new service, expanded below the list rather than in a dialog: three plain text
+ * inputs are not worth a modal for.
+ */
+function AddContentRelocationServiceForm({ onAdd, onCancel }: {
+    onAdd: (name: string, url: string, token: string) => void;
+    onCancel: () => void;
+}) {
+    const [ name, setName ] = useState("");
+    const [ url, setUrl ] = useState("");
+    const [ token, setToken ] = useState("");
+    const canAdd = name.trim().length > 0 && url.trim().length > 0;
+
+    return (
+        <>
+            <OptionCardSection
+                name="content-relocation-new-name"
+                label={t("content_relocation.service_name")}
+                description={t("content_relocation.service_name_description")}
+                stacked
+            >
+                <FormTextBox currentValue={name} onChange={setName} />
+            </OptionCardSection>
+
+            <OptionCardSection
+                name="content-relocation-new-url"
+                label={t("content_relocation.settings_url")}
+                description={t("content_relocation.settings_url_description")}
+                stacked
+            >
+                <FormTextBox
+                    placeholder="http://127.0.0.1:37862/"
+                    currentValue={url}
+                    onChange={setUrl}
+                />
+            </OptionCardSection>
+
+            <OptionCardSection
+                name="content-relocation-new-token"
+                label={t("content_relocation.settings_token")}
+                description={t("content_relocation.settings_token_description")}
+                stacked
+            >
+                <FormTextBox type="password" currentValue={token} onChange={setToken} />
+            </OptionCardSection>
+
+            <CardSection className="content-relocation-add-actions">
+                <Button
+                    name="confirm-add-content-relocation-service-button"
+                    text={t("common.save")}
+                    kind="primary"
+                    size="micro"
+                    disabled={!canAdd}
+                    onClick={() => onAdd(name.trim(), url.trim(), token)}
+                />
+                <Button
+                    name="cancel-add-content-relocation-service-button"
+                    text={t("common.cancel")}
+                    size="micro"
+                    onClick={onCancel}
+                />
+            </CardSection>
         </>
     );
 }

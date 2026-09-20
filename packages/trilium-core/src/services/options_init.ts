@@ -371,6 +371,15 @@ const defaultOptions: DefaultOption[] = [
     // OCR options
     { name: "ocrAutoProcessImages", value: "false", isSynced: true },
     { name: "ocrMinConfidence", value: "0.75", isSynced: true },
+
+    // Content relocation. Not synced: the service is reachable from the machine that was
+    // configured, which a second instance has no reason to share.
+    { name: "contentRelocationEnabled", value: "false", isSynced: false },
+    { name: "contentRelocationServices", value: "[]", isSynced: false },
+    { name: "contentRelocationDefault", value: "", isSynced: false },
+    { name: "contentRelocationUrl", value: "", isSynced: false },
+    { name: "contentRelocationToken", value: "", isSynced: false },
+    { name: "contentRelocationLocationLabel", value: "", isSynced: false },
 ];
 
 /**

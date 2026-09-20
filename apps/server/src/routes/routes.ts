@@ -26,6 +26,7 @@ import loginApiRoute from "./api/login.js";
 import metricsRoute from "./api/metrics.js";
 import ocrRoute from "./api/ocr.js";
 import onenoteImportRoute from "./api/onenote_import.js";
+import contentRelocation from './api/content_relocation.js';
 import recoveryCodes from './api/recovery_codes.js';
 import senderRoute from "./api/sender.js";
 import setupRestoreRoute from "./api/setup_restore.js";
@@ -88,6 +89,10 @@ function register(app: express.Application) {
     apiRoute(PST, '/api/totp_recovery/regenerate', recoveryCodes.regenerateRecoveryCodes);
     apiRoute(GET, '/api/totp_recovery/enabled', recoveryCodes.checkForRecoveryKeys);
     apiRoute(GET, '/api/totp_recovery/used', recoveryCodes.getUsedRecoveryCodes);
+
+    // Server-only: the relocation service is reached over the network from this process, which the
+    // standalone build cannot do on the client's behalf.
+    asyncApiRoute(PST, '/api/content-relocation/move/:noteId', contentRelocation.move);
 
     routes.buildSharedApiRoutes({
         route,

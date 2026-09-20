@@ -15,3 +15,22 @@
         margin-bottom: 12px;
     }
 }
+
+.content-relocation {
+    .content-relocation-service-name {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* A service's address can run long and unbroken (no spaces to wrap at), so left alone it would
+       widen the card instead of the label wrapping under it. */
+    .content-relocation-service-url {
+        overflow-wrap: anywhere;
+    }
+
+    .content-relocation-add-actions {
+        display: flex;
+        gap: 8px;
+    }
+}

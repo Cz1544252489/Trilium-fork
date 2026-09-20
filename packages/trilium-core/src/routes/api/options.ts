@@ -161,12 +161,20 @@ const ALLOWED_OPTIONS = new Set<OptionNames>([
     "mcpEnabled",
     // OCR options
     "ocrAutoProcessImages",
-    "ocrMinConfidence"
+    "ocrMinConfidence",
+    // Content relocation options
+    "contentRelocationEnabled",
+    "contentRelocationServices",
+    "contentRelocationDefault",
+    "contentRelocationUrl",
+    "contentRelocationToken",
+    "contentRelocationLocationLabel"
 ]);
 
 // Options that contain secrets (API keys, tokens, etc.).
 // These can be written by the client but are never sent back in GET responses.
 const WRITE_ONLY_OPTIONS = new Set<string>([
+    "contentRelocationToken",
     "openaiApiKey",
     "anthropicApiKey"
 ]);

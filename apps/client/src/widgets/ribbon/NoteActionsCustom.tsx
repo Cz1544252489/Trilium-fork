@@ -10,7 +10,8 @@ import { t } from "../../services/i18n";
 import { copyImageReferenceToClipboard } from "../../services/image";
 import { getHelpUrlForNote } from "../../services/in_app_help";
 import { downloadFileNote, openNoteExternally } from "../../services/open";
-import { createImageSrcUrl, isMobile, openInAppHelpFromUrl } from "../../services/utils";
+import toast from "../../services/toast";
+import { createImageSrcUrl, getErrorMessage, isMobile, openInAppHelpFromUrl } from "../../services/utils";
 import { ViewTypeOptions } from "../collections/interface";
 import { buildSaveSqlToNoteHandler } from "../FloatingButtonsDefinitions";
 import { showImageCompressionDialog } from "../dialogs/image_compression/image_compression_dialog";
@@ -23,6 +24,7 @@ import { isSplitEditorForcedReadOnly, resolveDisplayMode } from "../type_widgets
 import { ParentComponent } from "../react/react_utils";
 import { buildUploadNewFileRevisionListener } from "./FilePropertiesTab";
 import { buildUploadNewImageRevisionListener } from "./ImagePropertiesTab";
+import { relocate, useRelocation } from "./ContentRelocationTab";
 
 interface NoteActionsCustomProps {
     note: FNote;
@@ -80,6 +82,7 @@ export default function NoteActionsCustom(props: NoteActionsCustomProps) {
             {innerProps.note.noteId === "_backendLog" && <DownloadFileButton {...innerProps} />}
             <CopyReferenceToClipboardButton {...innerProps} />
             <InAppHelpButton {...innerProps} />
+            <ContentRelocationButton {...innerProps} />
             <NoteActionsCustomInner {...innerProps} />
         </div>
     );
@@ -155,6 +158,46 @@ function CompressImageButton({ note, noteMime }: NoteActionsCustomInnerProps) {
             text={t("compress-image")}
             disabled={!note.isContentAvailable()}
             onClick={() => void showImageCompressionDialog({ type: "note", noteId: note.noteId, mime: noteMime })}
+        />
+    );
+}
+
+/**
+ * Hands the note's content to the configured relocation service, or asks for it back. Which way is
+ * on offer, and whether anything is, comes from the note itself — see {@link useRelocation}.
+ */
+function ContentRelocationButton({ note }: NoteActionsCustomInnerProps) {
+    const { offered, isLocal } = useRelocation(note);
+    const [ moving, setMoving ] = useState(false);
+
+    if (!offered) {
+        return null;
+    }
+
+    async function onClick() {
+        setMoving(true);
+        try {
+            const result = await relocate(note.noteId, isLocal ? "external" : "local");
+            if (result.ok) {
+                toast.showMessage(result.log.trim() || t("content_relocation.moved"));
+            } else {
+                toast.showError(result.error ?? result.log);
+            }
+        } catch (e) {
+            toast.showError(getErrorMessage(e));
+        } finally {
+            setMoving(false);
+        }
+    }
+
+    return (
+        <NoteAction
+            icon={moving ? "bx bx-loader spin" : (isLocal ? "bx bx-cloud-upload" : "bx bx-cloud-download")}
+            text={isLocal
+                ? t("content_relocation.move_out", { storage: t("content_relocation.external_storage") })
+                : t("content_relocation.move_back")}
+            disabled={moving}
+            onClick={() => void onClick()}
         />
     );
 }
