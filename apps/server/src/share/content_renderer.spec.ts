@@ -344,6 +344,17 @@ describe("content_renderer", () => {
                 expect(content).toStrictEqual("<p>Foo</p>");
             });
 
+            it("does not treat an external URL's query string as a note ID", () => {
+                const target = buildShareNote({ id: "extIdTarget1", title: "Target" });
+                const href = `https://example.com/${target.noteId}?x=1`;
+                const note = buildShareNote({
+                    id: "note",
+                    content: `<p><a class="reference-link" href="${href}">text</a></p>`
+                });
+                const result = getContent(note);
+                expect(result.content).toStrictEqual("<p>text</p>");
+            });
+
             it("properly escapes note title", () => {
                 buildShareNote({
                     id: "MSkxxCFbBsYP",
@@ -365,6 +376,53 @@ describe("content_renderer", () => {
                         <a class="reference-link type-text" href="./MSkxxCFbBsYP"><span><span class="tn-icon bx bx-note"></span>The quick &lt;strong&gt;brown&lt;/strong&gt; fox</span></a>
                     </p>
                 `);
+            });
+
+            it("keeps a reference link whose target has a shareAlias or shareExternalLink", () => {
+                buildShareNote({ id: "aliasTarget01", title: "Linux", "#shareAlias": "linux" });
+                buildShareNote({
+                    id: "extTarget0001",
+                    title: "Ext",
+                    "#shareExternalLink": "https://example.com/some/page"
+                });
+                const note = buildShareNote({
+                    id: "note",
+                    content: trimIndentation`\
+                        <p>
+                            <a class="reference-link" href="#root/zaIItd4TM5Ly/aliasTarget01">
+                                Old title
+                            </a>
+                            <a class="reference-link" href="#root/extTarget0001?viewMode=source">
+                                Old
+                            </a>
+                        </p>
+                    `
+                });
+                const result = getContent(note);
+                const links = parse(String(result.content)).querySelectorAll("a.reference-link");
+                expect(links).toHaveLength(2);
+
+                const [ aliasLink, externalLink ] = links;
+                expect(aliasLink.getAttribute("href")).toBe("./linux");
+                expect(aliasLink.classList.contains("type-text")).toBe(true);
+                expect(aliasLink.querySelector("span.tn-icon")).not.toBeNull();
+                expect(aliasLink.text).toBe("Linux");
+
+                expect(externalLink.getAttribute("href")).toBe("https://example.com/some/page");
+                expect(externalLink.getAttribute("target")).toBe("_blank");
+                expect(externalLink.getAttribute("rel")).toBe("noopener noreferrer");
+                expect(externalLink.text).toBe("Ext");
+            });
+
+            it("replaces a reference link to a missing attachment with its text", () => {
+                buildShareNote({ id: "attachOwner01", title: "Owner" });
+                const href = "#root/attachOwner01?viewMode=attachments&amp;attachmentId=missing01";
+                const note = buildShareNote({
+                    id: "note",
+                    content: `<p><a class="reference-link" href="${href}">clip.mp4</a></p>`
+                });
+                const result = getContent(note);
+                expect(result.content).toStrictEqual("<p>clip.mp4</p>");
             });
         });
     });
@@ -670,6 +728,56 @@ describe("content_renderer", () => {
             expect(Object.keys(internal?.attributes ?? {}).sort()).toEqual([ "class", "href" ]);
         });
 
+        it("links to the first non-empty value of either external link label", () => {
+            const documented = renderTreeItemAnchor({
+                "id": "external2",
+                "#shareExternalLink": "https://example.com/page"
+            });
+            const bothLabels = renderTreeItemAnchor({
+                "id": "external3",
+                "#shareExternal": "",
+                "#shareExternalLink": "https://example.com/page"
+            });
+
+            for (const anchor of [ documented, bothLabels ]) {
+                expect(anchor?.getAttribute("href")).toBe("https://example.com/page");
+                expect(anchor?.getAttribute("target")).toBe("_blank");
+                expect(anchor?.getAttribute("rel")).toBe("noopener noreferrer");
+                expect(Object.keys(anchor?.attributes ?? {}).sort())
+                    .toEqual([ "class", "href", "rel", "target" ]);
+            }
+
+            const noUrl = renderTreeItemAnchor({ "id": "external4", "#shareExternal": "" });
+
+            expect(noUrl?.getAttribute("href")).toBe("./external4");
+            expect(Object.keys(noUrl?.attributes ?? {}).sort()).toEqual([ "class", "href" ]);
+
+            const twoUrls = renderTreeItemAnchor({
+                "id": "external5",
+                "#shareExternal": "https://example.com/legacy",
+                "#shareExternalLink": "https://example.com/documented"
+            });
+
+            expect(twoUrls?.getAttribute("href")).toBe("https://example.com/documented");
+
+            const whitespaceWithLegacy = renderTreeItemAnchor({
+                "id": "external6",
+                "#shareExternal": "https://example.com/legacy2",
+                "#shareExternalLink": "   "
+            });
+
+            expect(whitespaceWithLegacy?.getAttribute("href")).toBe("https://example.com/legacy2");
+
+            const whitespaceOnly = renderTreeItemAnchor({
+                "id": "external7",
+                "#shareExternalLink": "   "
+            });
+
+            expect(whitespaceOnly?.getAttribute("href")).toBe("./external7");
+            expect(Object.keys(whitespaceOnly?.attributes ?? {}).sort())
+                .toEqual([ "class", "href" ]);
+        });
+
         function renderTreeItemAnchor(noteDef: Parameters<typeof buildShareNote>[0]) {
             const note = buildShareNote(noteDef);
             const subRootNote = buildShareNote({ id: `subRoot-${noteDef.id}` });
@@ -698,10 +806,37 @@ describe("content_renderer", () => {
                         "title": "External",
                         "#shareExternal": "https://example.com/page"
                     },
-                    { id: "pageInternal", title: "Internal" }
+                    {
+                        "id": "pageBothLabels",
+                        "title": "Both labels",
+                        "#shareExternal": "",
+                        "#shareExternalLink": "https://example.com/other"
+                    },
+                    { id: "pageInternal", title: "Internal" },
+                    {
+                        "id": "pageTwoUrls",
+                        "title": "Two URLs",
+                        "#shareExternal": "https://example.com/legacy",
+                        "#shareExternalLink": "https://example.com/documented"
+                    },
+                    {
+                        "id": "pageWhitespaceWithLegacy",
+                        "title": "Whitespace with legacy",
+                        "#shareExternal": "https://example.com/legacy2",
+                        "#shareExternalLink": "   "
+                    },
+                    {
+                        "id": "pageWhitespaceOnly",
+                        "title": "Whitespace only",
+                        "#shareExternalLink": "   "
+                    }
                 ]
             });
             const anchors = renderPageAnchors("pageParent");
+
+            const bothLabels = anchors.find((a) => a.textContent === "Both labels");
+            expect(bothLabels?.getAttribute("href")).toBe("https://example.com/other");
+            expect(bothLabels?.getAttribute("target")).toBe("_blank");
 
             const external = anchors.find((a) => a.textContent === "External");
             expect(external?.getAttribute("href")).toBe("https://example.com/page");
@@ -713,6 +848,18 @@ describe("content_renderer", () => {
             const internal = anchors.find((a) => a.textContent === "Internal");
             expect(internal?.getAttribute("href")).toBe("./pageInternal");
             expect(Object.keys(internal?.attributes ?? {}).sort()).toEqual([ "class", "href" ]);
+
+            const twoUrls = anchors.find((a) => a.textContent === "Two URLs");
+            expect(twoUrls?.getAttribute("href")).toBe("https://example.com/documented");
+
+            const whitespaceWithLegacy = anchors
+                .find((a) => a.textContent === "Whitespace with legacy");
+            expect(whitespaceWithLegacy?.getAttribute("href")).toBe("https://example.com/legacy2");
+
+            const whitespaceOnly = anchors.find((a) => a.textContent === "Whitespace only");
+            expect(whitespaceOnly?.getAttribute("href")).toBe("./pageWhitespaceOnly");
+            expect(Object.keys(whitespaceOnly?.attributes ?? {}).sort())
+                .toEqual([ "class", "href" ]);
         });
 
         function renderPageAnchors(noteId: string) {
