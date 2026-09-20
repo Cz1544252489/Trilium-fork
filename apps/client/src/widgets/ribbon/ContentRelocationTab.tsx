@@ -14,8 +14,16 @@ import { TabContext } from "./ribbon-interface";
 
 /**
  * Relocation hands a note's content to an external service and brings it back. Where the content is
- * needs no asking: a `file` note holds it, a `webView` note carrying `relocationId` has it outside.
+ * needs no asking: a `file` note holds it, a `webView` note carrying one of the relocation labels
+ * has it outside.
  */
+
+/**
+ * The labels that mark content waiting outside. `relocationHash` is what a relocation writes now;
+ * the other two are what earlier versions wrote, and a note that still carries one of them can
+ * still be brought back.
+ */
+const OUTSIDE_LABELS = [ "relocationHash", "relocationInfo", "relocationId" ] as const;
 
 /** A move can take minutes, so it gets the timeout the repository uses for long operations. */
 const MOVE_TIMEOUT_MS = 60 * 60 * 1000;
@@ -97,8 +105,8 @@ export default function ContentRelocationTab({ note }: Pick<TabContext, "note">)
 
 /**
  * Whether this note can be moved, and which way. A `file` note's content is in the database and can
- * go out; a `webView` note that carries `relocationId` has content waiting to come back. Everything
- * else, and every note at all while relocation is switched off, is offered nothing.
+ * go out; a `webView` note that carries one of {@link OUTSIDE_LABELS} has content waiting to come
+ * back. Everything else, and every note at all while relocation is switched off, is offered nothing.
  */
 export function useRelocation(note: TabContext["note"]) {
     const noteType = useNoteProperty(note, "type");
@@ -112,6 +120,19 @@ export function useRelocation(note: TabContext["note"]) {
     const isOutside = noteType === "webView" && !!(relocationHash || relocationInfo || relocationId);
 
     return { offered: enabled && (isLocal || isOutside), isLocal };
+}
+
+/**
+ * The same question as {@link useRelocation}, for callers that cannot hold hooks — the ribbon's
+ * `show` among them. Both read the note the same way, so the tab appears exactly where the button
+ * does; a check written out a second time is how the two drifted apart before.
+ */
+export function isRelocationOffered(note: TabContext["note"]) {
+    if (!note || !options.is("contentRelocationEnabled")) {
+        return false;
+    }
+    return note.type === "file"
+        || (note.type === "webView" && OUTSIDE_LABELS.some((name) => !!note.getLabelValue(name)));
 }
 
 /**
