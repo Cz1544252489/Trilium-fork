@@ -218,6 +218,10 @@ const BUILTIN_ATTRIBUTES = [
     { type: "label", name: "relocationId", valueType: "text" },
     { type: "label", name: "relocationMime", valueType: "text" },
     { type: "label", name: "relocationSha256", valueType: "text" },
+    // Where a note's content sits: true in this database, false on a relocation service. The name
+    // is what contentRelocationLocationLabel defaults to; point that option at another name and
+    // the label is written under that name instead, without the completion this entry provides.
+    { type: "label", name: "IsLocal", valueType: "boolean" },
     { type: "label", name: "hideHighlightWidget", valueType: "boolean" },
     { type: "label", name: "iconPack", valueType: "text", isDangerous: true },
     { type: "label", name: "docName", valueType: "text", isDangerous: true },

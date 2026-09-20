@@ -379,7 +379,7 @@ const defaultOptions: DefaultOption[] = [
     { name: "contentRelocationDefault", value: "", isSynced: false },
     { name: "contentRelocationUrl", value: "", isSynced: false },
     { name: "contentRelocationToken", value: "", isSynced: false },
-    { name: "contentRelocationLocationLabel", value: "", isSynced: false },
+    { name: "contentRelocationLocationLabel", value: "IsLocal", isSynced: false },
 ];
 
 /**

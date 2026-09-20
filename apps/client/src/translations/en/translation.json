@@ -4326,6 +4326,6 @@
     "delete_confirmation": "Delete \"{{name}}\"? Its content stays on the service, but Trilium will no longer be able to find it.",
     "no_services": "No services configured yet.",
     "settings_location_label": "Location label",
-    "settings_location_label_description": "Name of a label to keep in step with where a note's content is: set to \"false\" when the content moves out, and to \"true\" when it moves back. Leave blank to write no label."
+    "settings_location_label_description": "Name of a label to keep in step with where a note's content is: set to \"false\" when the content moves out, and to \"true\" when it moves back. Defaults to \"IsLocal\"; leave blank to write no label."
   }
 }

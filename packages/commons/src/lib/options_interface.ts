@@ -344,7 +344,7 @@ export interface OptionDefinitions extends KeyboardShortcutsOptions<KeyboardActi
     contentRelocationUrl: string;
     /** Bearer token that went with it. */
     contentRelocationToken: string;
-    /** Label name written `false` when content moves out and `true` when it moves back; empty to write none. */
+    /** Label name written `false` when content moves out and `true` when it moves back, `IsLocal` by default; empty to write none. */
     contentRelocationLocationLabel: string;
 }
 
