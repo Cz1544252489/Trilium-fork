@@ -2835,7 +2835,9 @@
     "delete-notes-in-progress": "Delete notes in progress: {{count}}",
     "delete-finished-successfully": "Delete finished successfully.",
     "undeleting-notes-in-progress": "Undeleting notes in progress: {{count}}",
-    "undeleting-notes-finished-successfully": "Undeleting notes finished successfully."
+    "undeleting-notes-finished-successfully": "Undeleting notes finished successfully.",
+    "delete-notes-in-progress-with-total": "Deleted {{progress}} notes out of {{total}}",
+    "erasing-notes": "Erasing notes…"
   },
   "frontend_script_api": {
     "async_warning": "You're passing an async function to `api.runOnBackend()` which will likely not work as you intended.\\nEither make the function synchronous (by removing `async` keyword), or use `api.runAsyncOnBackendWithManualTransactionHandling()`.",

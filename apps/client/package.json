@@ -69,7 +69,7 @@
     "rrule": "2.8.1",
     "tabulator-tables": "6.5.3",
     "temporal-polyfill": "1.0.5",
-    "terra-draw": "1.33.0",
+    "terra-draw": "1.34.0",
     "terra-draw-maplibre-gl-adapter": "1.4.1"
   },
   "devDependencies": {
@@ -82,7 +82,7 @@
     "@types/mark.js": "8.11.12",
     "@types/tabulator-tables": "6.3.6",
     "happy-dom": "20.14.5",
-    "jsdom": "30.0.1",
+    "jsdom": "30.1.0",
     "lightningcss": "1.33.0",
     "sass": "1.104.1",
     "stylelint": "17.15.0",

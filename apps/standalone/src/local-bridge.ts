@@ -55,7 +55,8 @@ export function announceLeadership(): void {
     navigator.serviceWorker?.controller?.postMessage({ type: "LEADER_ANNOUNCE" });
 }
 
-const LOCAL_API_PREFIXES = ["/bootstrap", "/api/", "/sync/", "/search/"];
+/** Must stay in step with LOCAL_FIRST_PREFIXES in sw.ts, which covers the same paths on the web. */
+const LOCAL_API_PREFIXES = ["/bootstrap", "/api/", "/sync/", "/search/", "/custom/"];
 
 /**
  * Restores the database from a backup, on the worker that owns it.

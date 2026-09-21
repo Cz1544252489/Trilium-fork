@@ -458,7 +458,9 @@ describe("localFetch", () => {
 describe("isLocalApiRequest", () => {
     it("matches only the local API prefixes", async () => {
         const bridge = await freshBridge();
-        for (const path of ["/bootstrap", "/api/notes", "/sync/changed", "/search/q"]) {
+        // `/custom/` carries custom request handlers and resource providers, which a frontend
+        // script reaches with a plain fetch rather than through `server.ts`.
+        for (const path of ["/bootstrap", "/api/notes", "/sync/changed", "/search/q", "/custom/my-handler"]) {
             expect(bridge.isLocalApiRequest(new URL(`http://x${path}`))).toBe(true);
         }
         expect(bridge.isLocalApiRequest(new URL("http://x/app.js"))).toBe(false);

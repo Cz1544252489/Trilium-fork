@@ -123,12 +123,12 @@
     "claude-sonnet-4-5": {
       "input": 3,
       "output": 15,
-      "ctx": 200000
+      "ctx": 1000000
     },
     "claude-sonnet-4-5-20250929": {
       "input": 3,
       "output": 15,
-      "ctx": 200000
+      "ctx": 1000000
     },
     "claude-sonnet-4-6": {
       "input": 3,
@@ -175,8 +175,8 @@
   },
   "google": {
     "gemini-2.0-flash": {
-      "input": 0.1,
-      "output": 0.4,
+      "input": 0.15,
+      "output": 0.6,
       "ctx": 1048576
     },
     "gemini-2.0-flash-001": {
@@ -295,13 +295,13 @@
       "ctx": 1048576
     },
     "gemini-flash-latest": {
-      "input": 0.3,
-      "output": 2.5,
+      "input": 0.75,
+      "output": 3.75,
       "ctx": 1048576
     },
     "gemini-flash-lite-latest": {
-      "input": 0.1,
-      "output": 0.4,
+      "input": 0.3,
+      "output": 2.5,
       "ctx": 1048576
     },
     "gemini-omni-flash-preview": {
@@ -310,8 +310,8 @@
       "ctx": 1048576
     },
     "gemini-pro-latest": {
-      "input": 1.25,
-      "output": 10,
+      "input": 2,
+      "output": 12,
       "ctx": 1048576
     },
     "gemini-robotics-er-1.5-preview": {
@@ -616,6 +616,10 @@
       "output": 30,
       "ctx": 1050000
     },
+    "gpt-5.5-cyber": {
+      "input": 12.5,
+      "output": 75
+    },
     "gpt-5.6": {
       "input": 4,
       "output": 20,
@@ -675,6 +679,10 @@
       "input": 0.6,
       "output": 2.4,
       "ctx": 128000
+    },
+    "gpt-rosalind-research": {
+      "input": 5,
+      "output": 25
     },
     "o1": {
       "input": 15,
